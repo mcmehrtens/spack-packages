@@ -39,6 +39,32 @@ class GoSh(GoPackage):
     variant("gosh", default=False, description="Build and install gosh")
     conflicts("~shfmt~gosh", msg="One of shfmt or gosh must be specified")
 
+    resource(
+        url="https://proxy.golang.org/github.com/google/renameio/v2/@v/2.0.2.zip",
+        sha256="4ea1f7ec938cc2206827f129f40ed9a266f4df30198fcff08de07da4b72276cb",
+        when="@3.13.1+shfmt",
+    )
+    resource(
+        url="https://proxy.golang.org/github.com/rogpeppe/go-internal/@v/1.14.1.zip",
+        sha256="ab3d18283cef2f46ddfd489b6b14b970eb7dbbb642786f025ee1ac5291dc4e70",
+        when="@3.13.1+shfmt",
+    )
+    resource(
+        url="https://proxy.golang.org/mvdan.cc/editorconfig/@v/0.3.0.zip",
+        sha256="aa50c43e789b025f04bea950f104314946d2faa5035442bf5f7415eb97860fe1",
+        when="@3.13.1+shfmt",
+    )
+    resource(
+        url="https://proxy.golang.org/golang.org/x/sys/@v/0.42.0.zip",
+        sha256="99df0ad90183debc80aee0b7489648574c6baa0c1cf5da37aaf591cf2e2d426a",
+        when="@3.13.1",
+    )
+    resource(
+        url="https://proxy.golang.org/golang.org/x/term/@v/0.41.0.zip",
+        sha256="91ca75a3f454d5ddede1f58c3e4fc8e169c6f3c037223ac0ac76e78234d22828",
+        when="@3.13.1",
+    )
+
     @property
     def sanity_check_is_file(self):
         files = []
