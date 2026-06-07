@@ -14,9 +14,10 @@ class GoSh(GoPackage):
     homepage = "https://github.com/mvdan/sh"
     git = "https://github.com/mvdan/sh.git"
     url = "https://github.com/mvdan/sh/archive/refs/tags/v3.12.0.tar.gz"
+    supplier = "Person: Daniel Martí (mvdan@mvdan.cc)"
 
     maintainers("mcmehrtens")
-    license("BSD-3-Clause", checked_by="mcmehrtens")
+    license("BSD-3-Clause", checked_by="mcmehrtens", when="@0.1:")
 
     version(
         "3.13.1",
