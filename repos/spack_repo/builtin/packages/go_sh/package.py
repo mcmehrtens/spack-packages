@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
+import re
+
 from spack_repo.builtin.build_systems.go import GoPackage
 
 from spack.package import *
@@ -15,6 +17,7 @@ class GoSh(GoPackage):
     git = "https://github.com/mvdan/sh.git"
     url = "https://github.com/mvdan/sh/archive/refs/tags/v3.12.0.tar.gz"
     supplier = "Person: Daniel Martí (mvdan@mvdan.cc)"
+    executables = ["^shfmt$"]
 
     maintainers("mcmehrtens")
     license("BSD-3-Clause", checked_by="mcmehrtens", when="@0.1:")
@@ -39,6 +42,9 @@ class GoSh(GoPackage):
     variant("shfmt", default=True, description="Build and install shfmt")
     variant("gosh", default=False, description="Build and install gosh")
     conflicts("~shfmt~gosh", msg="One of shfmt or gosh must be specified")
+
+    # each of these commands exposed by go-sh has a matching +<name> variant and a ./cmd/<name> dir
+    commands = ("shfmt", "gosh")
 
     resource(
         url="https://proxy.golang.org/github.com/google/renameio/v2/@v/2.0.2.zip",
@@ -66,14 +72,19 @@ class GoSh(GoPackage):
         when="@3.13.1",
     )
 
+    @classmethod
+    def determine_version(cls, exe):
+        output = Executable(exe)("--version", output=str, error=str)
+        match = re.search(r"v?(\d+\.\d+\.\d+)", output)
+        return match.group(1) if match else None
+
+    @property
+    def selected_commands(self):
+        return [c for c in self.commands if self.spec.satisfies(f"+{c}")]
+
     @property
     def sanity_check_is_file(self):
-        files = []
-        if self.spec.satisfies("+shfmt"):
-            files.append(join_path("bin", "shfmt"))
-        if self.spec.satisfies("+gosh"):
-            files.append(join_path("bin", "gosh"))
-        return files
+        return [join_path("bin", c) for c in self.selected_commands]
 
     @property
     def ldflags(self):
@@ -83,23 +94,14 @@ class GoSh(GoPackage):
         return []
 
     def build(self, spec: Spec, prefix: Prefix) -> None:
-        """Runs ``go build`` in the source directory for the specified
-        variants."""
         with working_dir(self.build_directory):
-            if spec.satisfies("+shfmt"):
-                args = list(self.std_build_args)
-                args[args.index("-o") + 1] = "shfmt"
-                go("build", *args, "./cmd/shfmt")
-            if spec.satisfies("+gosh"):
-                args = list(self.std_build_args)
-                args[args.index("-o") + 1] = "gosh"
-                go("build", *args, "./cmd/gosh")
+            args = list(self.std_build_args)
+            for cmd in self.selected_commands:
+                args[args.index("-o") + 1] = cmd
+                go("build", *args, f"./cmd/{cmd}")
 
     def install(self, spec: Spec, prefix: Prefix) -> None:
-        """Install built binaries into prefix bin."""
         with working_dir(self.build_directory):
             mkdirp(prefix.bin)
-            if spec.satisfies("+shfmt"):
-                install("shfmt", prefix.bin)
-            if spec.satisfies("+gosh"):
-                install("gosh", prefix.bin)
+            for cmd in self.selected_commands:
+                install(cmd, prefix.bin)
